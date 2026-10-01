@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Recursos Educativos</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+}
+
+h1 {
+  margin-top: 20px;
+}
+
+input {
+  padding: 10px;
+  margin: 5px;
+  border-radius: 8px;
+  border: none;
+  width: 200px;
+}
+
+button {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: none;
+  background: #22c55e;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #16a34a;
+}
+
+#lista {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  background: #1e293b;
+  margin: 15px auto;
+  padding: 15px;
+  border-radius: 15px;
+  width: 300px;
+  box-shadow: 0px 5px 15px rgba(0,0,0,0.5);
+  transition: 0.3s;
+}
+
+li:hover {
+  transform: scale(1.05);
+}
+
+img, iframe {
+  margin-top: 10px;
+  border-radius: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="contenedor">
+  <h2>📘 Recursos Educativos</h2>
+
+  <input type="text" id="titulo" placeholder="Nombre del recurso">
+  <input type="text" id="link" placeholder="Enlace del recurso">
+
+  <button onclick="agregar()">PUBLICAR</button>
+
+  <input type="text" id="buscador" onkeyup="filtrar()" placeholder="Buscar...">
+
+  <ul id="lista"></ul>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<script>
+// CONFIG FIREBASE
+const firebaseConfig = {
+  apiKey: "AIzaSyApuY60IBtV42qD0ykfDHGumXPI3dzRcnk",
+  authDomain: "recursos-educativos-3659a.firebaseapp.com",
+  projectId: "recursos-educativos-3659a",
+  storageBucket: "recursos-educativos-3659a.firebasestorage.app",
+  messagingSenderId: "156916187621",
+  appId: "1:156916187621:web:c7c2ac844bb8723ee0ef0c"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// MOSTRAR
+function mostrar() {
+  let lista = document.getElementById("lista");
+  lista.innerHTML = "";
+
+  db.collection("recursos").get().then((datos) => {
+    datos.forEach((doc) => {
+      let data = doc.data();
+
+      let li = document.createElement("li");
+
+      let titulo = document.createElement("h3");
+      titulo.textContent = data.titulo;
+      li.appendChild(titulo);
+
+      // VIDEO
+      if (data.link.includes("youtube.com") || data.link.includes("youtu.be")) {
+
+  let videoId = "";
+
+  if (data.link.includes("watch?v=")) {
+    videoId = data.link.split("watch?v=")[1].split("&")[0];
+  } 
+  else if (data.link.includes("youtu.be/")) {
+    videoId = data.link.split("youtu.be/")[1].split("?")[0];
+  }
+
+  let img = document.createElement("img");
+  img.src = "https://img.youtube.com/vi/" + videoId + "/0.jpg";
+  img.width = 250;
+
+  let boton = document.createElement("button");
+  boton.textContent = "▶ Ver video";
+
+  boton.onclick = function () {
+    window.open("https://www.youtube.com/watch?v=" + videoId, "_blank");
+  };
+
+  li.appendChild(img);
+  li.appendChild(boton);
+  
+      } 
+      // IMAGEN
+      else if (data.link.includes(".jpg") || data.link.includes(".png")) {
+        let img = document.createElement("img");
+        img.src = data.link;
+        img.width = 200;
+        li.appendChild(img);
+      } 
+      // LINK NORMAL
+      else {
+        let enlace = document.createElement("a");
+        enlace.textContent = "Abrir recurso";
+        enlace.href = data.link;
+        enlace.target = "_blank";
+        li.appendChild(enlace);
+      }
+
+      // BOTÓN ELIMINAR
+      let eliminar = document.createElement("button");
+      eliminar.textContent = "Eliminar";
+      eliminar.style.marginLeft = "10px";
+
+      eliminar.onclick = function() {
+        db.collection("recursos").doc(doc.id).delete();
+        mostrar();
+      };
+
+      li.appendChild(eliminar);
+
+      lista.appendChild(li);
+    });
+  });
+}
+
+// AGREGAR
+function agregar() {
+  let titulo = document.getElementById("titulo").value;
+  let link = document.getElementById("link").value;
+
+  db.collection("recursos").add({
+    titulo: titulo,
+    link: link
+  }).then(() => {
+    mostrar();
+  });
+}
+
+// FILTRAR
+function filtrar() {
+  let texto = document.getElementById("buscador").value.toLowerCase();
+  let items = document.getElementsByTagName("li");
+
+  for (let i = 0; i < items.length; i++) {
+    let contenido = items[i].textContent.toLowerCase();
+
+    if (contenido.includes(texto)) {
+      items[i].style.display = "";
+    } else {
+      items[i].style.display = "none";
+    }
+  }
+}
+
+mostrar();
+</script>
+
+</body>
+</html>
